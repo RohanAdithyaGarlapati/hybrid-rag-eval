@@ -1,4 +1,4 @@
-"""Command line interface: index, query, and evaluate subcommands."""
+"""Command line interface: index, query, ask, and evaluate subcommands."""
 
 from __future__ import annotations
 
@@ -8,6 +8,9 @@ import json
 from .dataset import load_dataset
 from .embeddings import build_embedder
 from .evaluate import main as evaluate_main
+from .generator import AnswerGenerator
+from .judge import AnthropicJudge
+from .pipeline import answer_question
 from .retriever import HybridRetriever
 
 
@@ -43,6 +46,22 @@ def cmd_query(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_ask(args: argparse.Namespace) -> int:
+    retriever = _build(args.strategy)
+    generator = AnswerGenerator()
+    judge = AnthropicJudge()
+    res = answer_question(
+        retriever,
+        args.text,
+        k=args.k,
+        mode=args.mode,
+        generator=generator,
+        judge=judge,
+    )
+    print(json.dumps(res.to_dict(), indent=2))
+    return 0
+
+
 def cmd_evaluate(args: argparse.Namespace) -> int:
     forward: list[str] = []
     if args.out:
@@ -65,6 +84,13 @@ def main(argv: list[str] | None = None) -> int:
     p_query.add_argument("--mode", default="hybrid-rrf", choices=["lexical", "dense", "hybrid-rrf", "hybrid-normalized"])
     p_query.add_argument("--strategy", default="overlapping", choices=["fixed", "overlapping", "semantic"])
     p_query.set_defaults(func=cmd_query)
+
+    p_ask = sub.add_parser("ask", help="run end-to-end RAG pipeline (retrieve, generate, judge)")
+    p_ask.add_argument("text")
+    p_ask.add_argument("--k", type=int, default=5)
+    p_ask.add_argument("--mode", default="hybrid-rrf", choices=["lexical", "dense", "hybrid-rrf", "hybrid-normalized"])
+    p_ask.add_argument("--strategy", default="overlapping", choices=["fixed", "overlapping", "semantic"])
+    p_ask.set_defaults(func=cmd_ask)
 
     p_eval = sub.add_parser("evaluate", help="run the full experiment grid")
     p_eval.add_argument("--out", default=None)

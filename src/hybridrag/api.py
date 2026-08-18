@@ -1,15 +1,18 @@
-"""FastAPI service exposing /health, /search, and /answer with Pydantic validation."""
+"""FastAPI service exposing /health, /search, /answer, and /generate with Pydantic validation."""
 
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal
+from typing import Literal, Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from .dataset import load_dataset
 from .embeddings import build_embedder
+from .generator import AnswerGenerator
+from .judge import AnthropicJudge
+from .pipeline import answer_question
 from .retriever import MODES, HybridRetriever
 
 
@@ -42,11 +45,35 @@ class AnswerResponse(BaseModel):
     doc_ids: list[str]
 
 
+class GenerateResponse(BaseModel):
+    question: str
+    mode: str
+    abstained: bool
+    max_dense_sim: float
+    doc_ids: list[str]
+    context: str
+    answer: Optional[str]
+    answer_source: str
+    faithfulness: Optional[float] = None
+    answer_relevance: Optional[float] = None
+    notes: list[str] = Field(default_factory=list)
+
+
 @lru_cache(maxsize=1)
 def get_retriever() -> HybridRetriever:
     ds = load_dataset()
     embedder = build_embedder("auto")
     return HybridRetriever(ds["corpus"], embedder, strategy="overlapping")
+
+
+@lru_cache(maxsize=1)
+def get_generator() -> AnswerGenerator:
+    return AnswerGenerator()
+
+
+@lru_cache(maxsize=1)
+def get_judge() -> AnthropicJudge:
+    return AnthropicJudge()
 
 
 app = FastAPI(title="hybrid-rag-eval", version="0.1.0")
@@ -100,3 +127,19 @@ def answer(req: SearchRequest) -> AnswerResponse:
         context=context,
         doc_ids=result.doc_ids,
     )
+
+
+@app.post("/generate", response_model=GenerateResponse)
+def generate(req: SearchRequest) -> GenerateResponse:
+    retriever = get_retriever()
+    generator = get_generator()
+    judge = get_judge()
+    res = answer_question(
+        retriever,
+        req.query,
+        k=req.k,
+        mode=req.mode,
+        generator=generator,
+        judge=judge,
+    )
+    return GenerateResponse(**res.to_dict())

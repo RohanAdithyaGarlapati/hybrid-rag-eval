@@ -162,12 +162,46 @@ python -m hybridrag.cli evaluate
 uvicorn hybridrag.api:app --reload    # then GET /health, POST /search, POST /answer
 ```
 
-## LLM as judge
+## End-to-end RAG: generation and LLM-judged faithfulness
 
-`judge.py` scores faithfulness and answer relevance through the Anthropic API against a pinned model
-(`claude-3-5-sonnet-20241022`) and a versioned prompt (`faithfulness-relevance-v1`). It reads
-`ANTHROPIC_API_KEY` and, when the key or SDK is absent, reports itself unavailable and skips cleanly
-rather than failing.
+Beyond retrieval, the pipeline can generate a grounded answer and grade it. The flow
+in `pipeline.py` is: retrieve, abstain if confidence is below threshold, otherwise
+generate an answer constrained to the retrieved context, then judge that answer for
+faithfulness (is every claim supported by the context) and answer relevance.
+
+Generation and judging are provider agnostic (`_llm.py`) and key optional:
+
+* If `ANTHROPIC_API_KEY` is set, it uses the Anthropic API (model from `ANTHROPIC_MODEL`,
+  default `claude-3-5-sonnet-20241022`).
+* Else if `GROQ_API_KEY` is set, it uses the free Groq tier via the OpenAI compatible
+  SDK (model from `GROQ_MODEL`, default `openai/gpt-oss-20b`).
+* If neither key is present, generation and judging skip cleanly: retrieval still runs,
+  the answer is reported as unavailable, and nothing errors.
+
+Every generated answer is stamped with the `provider` and `model` that produced it, so
+runs stay auditable. Run it from the CLI:
+
+```bash
+# free path (no credit card): get a key at console.groq.com
+export GROQ_API_KEY=gsk_...
+python -m hybridrag.cli ask "how does bm25 rank documents"
+```
+
+Example output (Groq, free tier):
+
+```json
+{
+  "answer_source": "generated",
+  "provider": "groq",
+  "model": "openai/gpt-oss-20b",
+  "faithfulness": 1.0,
+  "answer_relevance": 1.0,
+  "doc_ids": ["doc-bm25", "doc-mrr", "doc-recall-at-k"]
+}
+```
+
+The same is exposed at `POST /generate` in the API. Out-of-corpus questions abstain
+before spending a call, so the guardrail is enforced end to end.
 
 ## License
 

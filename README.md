@@ -4,6 +4,7 @@
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Tests](https://img.shields.io/badge/tests-75%20passing-brightgreen)
+[![Live demo](https://img.shields.io/badge/demo-live-brightgreen)](https://hybrid-rag-eval-l4jtel6cptvubkvg2xxgsm.streamlit.app/)
 
 A hybrid (lexical plus dense) retrieval system with a statistical evaluation harness,
 built to be read as a portfolio piece: every module is small, tested, and honest about

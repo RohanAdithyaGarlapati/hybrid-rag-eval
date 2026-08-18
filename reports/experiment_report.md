@@ -1,6 +1,6 @@
 # hybrid-rag-eval experiment report
 
-- Commit SHA: `unknown`
+- Commit SHA: `b1b4873d877168f3ca01f39a9f0a4a748a6bb338`
 - Dataset SHA256: `878b47f05f8b6a13b0e131d3f73f82fd8fde3b500d98340c8f31cbe84b218996`
 - Embedder: `sentence-transformers/all-MiniLM-L6-v2` (dimension 384)
 - Embedder is_semantic: **True**

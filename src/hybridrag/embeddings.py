@@ -74,13 +74,14 @@ class HashingEmbedder:
             if len(s) < n:
                 continue
             for i in range(len(s) - n + 1):
-                grams.append(s[i : i + n])
+                grams.append(s[i: i + n])
         return grams
 
     def _embed_one(self, text: str) -> np.ndarray:
         vec = np.zeros(self._dimension, dtype=np.float64)
         for gram in self._grams(text):
-            digest = hashlib.blake2b(gram.encode("utf-8"), digest_size=8).digest()
+            digest = hashlib.blake2b(gram.encode(
+                "utf-8"), digest_size=8).digest()
             h = int.from_bytes(digest, "big")
             bucket = h % self._dimension
             sign = 1.0 if (h >> 63) & 1 else -1.0
@@ -109,7 +110,9 @@ class SentenceTransformerEmbedder:
             from sentence_transformers import SentenceTransformer  # deferred import
 
             self._model = SentenceTransformer(self._model_name)
-            self._dimension = int(self._model.get_sentence_embedding_dimension())
+            _get_dim = getattr(self._model, "get_embedding_dimension",
+                               None) or self._model.get_sentence_embedding_dimension
+            self._dimension = int(_get_dim())
         return self._model
 
     @property

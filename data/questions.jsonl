@@ -1,0 +1,50 @@
+{"id": "lex-01", "text": "What does a postings list in an inverted index record for each term?", "gold": ["doc-inverted-index"], "kind": "lexical"}
+{"id": "lex-02", "text": "How do the k1 and b parameters affect BM25 term frequency saturation and length normalization?", "gold": ["doc-bm25"], "kind": "lexical"}
+{"id": "lex-03", "text": "How does dense retrieval encode queries and documents into vectors and rank by cosine similarity?", "gold": ["doc-dense-retrieval"], "kind": "lexical"}
+{"id": "lex-04", "text": "Why does reciprocal rank fusion use the constant k of sixty when summing over ranks?", "gold": ["doc-rrf"], "kind": "lexical"}
+{"id": "lex-05", "text": "What is the difference between fixed, overlapping, and semantic chunking strategies?", "gold": ["doc-chunking"], "kind": "lexical"}
+{"id": "lex-06", "text": "What fraction does recall at k measure among the top k retrieved results?", "gold": ["doc-recall-at-k"], "kind": "lexical"}
+{"id": "lex-07", "text": "How does mean reciprocal rank average the reciprocal of the first relevant rank?", "gold": ["doc-mrr"], "kind": "lexical"}
+{"id": "lex-08", "text": "How does normalized discounted cumulative gain discount gain by the logarithm of position?", "gold": ["doc-ndcg"], "kind": "lexical"}
+{"id": "lex-09", "text": "What is run to run variance across different random seeds and shuffles?", "gold": ["doc-run-variance"], "kind": "lexical"}
+{"id": "lex-10", "text": "How does the Mann-Whitney U test rank pooled observations without assuming normality?", "gold": ["doc-mann-whitney"], "kind": "lexical"}
+{"id": "lex-11", "text": "How does the rank biserial correlation label effect size as negligible, small, medium, or large?", "gold": ["doc-effect-size"], "kind": "lexical"}
+{"id": "lex-12", "text": "How does the Holm-Bonferroni correction control the family wise error rate in a step down fashion?", "gold": ["doc-holm-bonferroni"], "kind": "lexical"}
+{"id": "lex-13", "text": "How does a bootstrap confidence interval resample data with replacement and read percentiles?", "gold": ["doc-bootstrap-ci"], "kind": "lexical"}
+{"id": "lex-14", "text": "Why does a paired design evaluate two systems on the same queries for more statistical power?", "gold": ["doc-paired-design"], "kind": "lexical"}
+{"id": "lex-15", "text": "Why must the judge model be pinned and its prompt versioned when using an LLM as a judge?", "gold": ["doc-llm-judge"], "kind": "lexical"}
+{"id": "lex-16", "text": "How is faithfulness scored by checking each claim against the retrieved context?", "gold": ["doc-faithfulness"], "kind": "lexical"}
+{"id": "lex-17", "text": "How does the abstention policy trade correct abstention against false abstention with a confidence threshold?", "gold": ["doc-abstention"], "kind": "lexical"}
+{"id": "lex-18", "text": "How does reranking use a cross encoder to score query and document pairs jointly?", "gold": ["doc-reranking"], "kind": "lexical"}
+{"id": "lex-19", "text": "How does approximate nearest neighbor search trade recall for speed using graph indexes?", "gold": ["doc-ann-search"], "kind": "lexical"}
+{"id": "lex-20", "text": "How does a vector store keep embeddings normalized so cosine similarity reduces to a dot product?", "gold": ["doc-vector-store"], "kind": "lexical"}
+{"id": "lex-21", "text": "How does idempotent ingestion key records on a content hash to avoid duplicates?", "gold": ["doc-idempotent-ingestion"], "kind": "lexical"}
+{"id": "lex-22", "text": "Why do the ninety fifth and ninety ninth latency percentiles reveal slow tail requests?", "gold": ["doc-latency-percentiles"], "kind": "lexical"}
+{"id": "lex-23", "text": "How does a continuous integration gate fail the build if recall drops below a threshold?", "gold": ["doc-ci-gates"], "kind": "lexical"}
+{"id": "lex-24", "text": "How does a conservative suffix stemmer strip endings like ing, ed, and plural s?", "gold": ["doc-stemming"], "kind": "lexical"}
+{"id": "lex-25", "text": "Why does batching group many requests into one call to raise throughput?", "gold": ["doc-batching"], "kind": "lexical"}
+{"id": "par-01", "text": "Which lookup structure lets an engine jump straight to the files that mention a word?", "gold": ["doc-inverted-index"], "kind": "paraphrase"}
+{"id": "par-02", "text": "Which classic keyword scorer weighs rare words more and dampens repeated ones?", "gold": ["doc-bm25"], "kind": "paraphrase"}
+{"id": "par-03", "text": "How can a system find passages that mean the same thing even with no shared words?", "gold": ["doc-dense-retrieval"], "kind": "paraphrase"}
+{"id": "par-04", "text": "What method blends several ordered result lists using only positions rather than raw scores?", "gold": ["doc-rrf"], "kind": "paraphrase"}
+{"id": "par-05", "text": "How should a long article be cut into smaller pieces for focused lookup?", "gold": ["doc-chunking"], "kind": "paraphrase"}
+{"id": "par-06", "text": "What tells you whether the right answer showed up anywhere in the first few hits?", "gold": ["doc-recall-at-k"], "kind": "paraphrase"}
+{"id": "par-07", "text": "What single number rewards putting the first correct hit as high as possible?", "gold": ["doc-mrr"], "kind": "paraphrase"}
+{"id": "par-08", "text": "Which graded quality score cares about the exact order of the best items near the top?", "gold": ["doc-ndcg"], "kind": "paraphrase"}
+{"id": "par-09", "text": "Why can the same benchmark give slightly different outcomes each time you run it?", "gold": ["doc-run-variance"], "kind": "paraphrase"}
+{"id": "par-10", "text": "Which distribution free comparison checks if one unpaired group tends to score higher?", "gold": ["doc-mann-whitney"], "kind": "paraphrase"}
+{"id": "par-11", "text": "How do you express how big a difference is, separate from whether it is unlikely by chance?", "gold": ["doc-effect-size"], "kind": "paraphrase"}
+{"id": "par-12", "text": "When running many comparisons at once, how do you keep the chance of a false alarm in check?", "gold": ["doc-holm-bonferroni"], "kind": "paraphrase"}
+{"id": "par-13", "text": "How can you build an uncertainty range by drawing samples over and over from your own data?", "gold": ["doc-bootstrap-ci"], "kind": "paraphrase"}
+{"id": "par-14", "text": "Why is it stronger to test two approaches on the identical set of questions?", "gold": ["doc-paired-design"], "kind": "paraphrase"}
+{"id": "par-15", "text": "How can an automated model grade generated responses when human labels are missing?", "gold": ["doc-llm-judge"], "kind": "paraphrase"}
+{"id": "par-16", "text": "How do you tell whether a written reply invented facts the sources never contained?", "gold": ["doc-faithfulness"], "kind": "paraphrase"}
+{"id": "par-17", "text": "How do you tell whether a reply actually answered what was asked instead of wandering?", "gold": ["doc-answer-relevance"], "kind": "paraphrase"}
+{"id": "par-18", "text": "When should a system say it does not know rather than guess an unsupported reply?", "gold": ["doc-abstention"], "kind": "paraphrase"}
+{"id": "par-19", "text": "What validation layers reject bad input and block ungrounded output before it reaches a user?", "gold": ["doc-guardrails"], "kind": "paraphrase"}
+{"id": "par-20", "text": "Why should every wording change to a template be tracked with an identifier for reproducibility?", "gold": ["doc-prompt-versioning"], "kind": "paraphrase"}
+{"id": "par-21", "text": "How do you decide how many passages fit inside a limited model window?", "gold": ["doc-context-budget"], "kind": "paraphrase"}
+{"id": "par-22", "text": "Why do models often overlook evidence placed in the center of a very long prompt?", "gold": ["doc-lost-in-middle"], "kind": "paraphrase"}
+{"id": "par-23", "text": "How do column oriented layouts speed up scans that touch only a few fields?", "gold": ["doc-columnar-storage"], "kind": "paraphrase"}
+{"id": "par-24", "text": "How can storing an expensive result avoid repeating the same work on later requests?", "gold": ["doc-caching"], "kind": "paraphrase"}
+{"id": "par-25", "text": "Why fix the state of the random generators before starting an experiment?", "gold": ["doc-seeding"], "kind": "paraphrase"}

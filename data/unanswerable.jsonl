@@ -1,0 +1,10 @@
+{"id": "una-01", "text": "How does the credit assignment problem work in deep reinforcement learning?", "gold": [], "kind": "unanswerable"}
+{"id": "una-02", "text": "What noise schedule should I use to train a diffusion image generator?", "gold": [], "kind": "unanswerable"}
+{"id": "una-03", "text": "How do I fine tune a large language model with low rank adapters?", "gold": [], "kind": "unanswerable"}
+{"id": "una-04", "text": "What is the best way to stabilize training of a generative adversarial network?", "gold": [], "kind": "unanswerable"}
+{"id": "una-05", "text": "How does a convolutional neural network detect edges in an image?", "gold": [], "kind": "unanswerable"}
+{"id": "una-06", "text": "What database isolation level prevents phantom reads in a payments ledger?", "gold": [], "kind": "unanswerable"}
+{"id": "una-07", "text": "How do I configure Kubernetes horizontal pod autoscaling for a web service?", "gold": [], "kind": "unanswerable"}
+{"id": "una-08", "text": "What is the time complexity of Dijkstra's shortest path algorithm with a heap?", "gold": [], "kind": "unanswerable"}
+{"id": "una-09", "text": "How does gradient clipping prevent exploding gradients in recurrent networks?", "gold": [], "kind": "unanswerable"}
+{"id": "una-10", "text": "What are the tradeoffs between OAuth and SAML for enterprise single sign on?", "gold": [], "kind": "unanswerable"}

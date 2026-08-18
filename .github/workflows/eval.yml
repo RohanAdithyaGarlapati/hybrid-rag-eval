@@ -1,0 +1,41 @@
+name: eval
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check src tests data scripts
+
+      - name: Build dataset
+        run: python data/build_dataset.py
+
+      - name: Run test suite
+        run: pytest -q
+
+      - name: Evaluation quality gate (recall@5 threshold)
+        run: python scripts/eval_gate.py
+
+      - name: Upload experiment report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiment-report
+          path: reports/experiment_report.md

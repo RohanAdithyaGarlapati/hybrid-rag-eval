@@ -34,9 +34,48 @@ class _Messages:
         return _Msg(self._text)
 
 
-class _FakeClient:
+class _AnthropicFake:
     def __init__(self, text):
         self.messages = _Messages(text)
+
+
+class _ChoiceMsg:
+    def __init__(self, text):
+        self.content = text
+
+
+class _Choice:
+    def __init__(self, text):
+        self.message = _ChoiceMsg(text)
+
+
+class _CompletionsResp:
+    def __init__(self, text):
+        self.choices = [_Choice(text)]
+
+
+class _Completions:
+    def __init__(self, text):
+        self._text = text
+
+    def create(self, **kwargs):
+        return _CompletionsResp(self._text)
+
+
+class _Chat:
+    def __init__(self, text):
+        self.completions = _Completions(text)
+
+
+class _OpenAIFake:
+    def __init__(self, text):
+        self.chat = _Chat(text)
+
+
+def _inject(obj, fake_client, provider="anthropic", model="claude-3-5-sonnet-20241022"):
+    obj._llm.client = fake_client
+    obj._llm.provider = provider
+    obj._llm.model = model
 
 
 @pytest.fixture
@@ -46,6 +85,7 @@ def retriever():
 
 def test_generator_skips_without_key(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     gen = AnswerGenerator()
     assert gen.available is False
     assert gen.generate("q", "context") is None
@@ -55,12 +95,25 @@ def test_generator_skips_without_key(monkeypatch):
 def test_generator_parses_fake_client_response(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     gen = AnswerGenerator()
-    gen._client = _FakeClient("BM25 ranks by term frequency and length.")
+    _inject(gen, _AnthropicFake("BM25 ranks by term frequency and length."), provider="anthropic", model="claude-3-5-sonnet-20241022")
     out = gen.generate("how does bm25 rank", "BM25 scores documents ...")
     assert out is not None
     assert "BM25" in out.text
-    assert out.model == gen.model
+    assert out.provider == "anthropic"
+    assert out.model == "claude-3-5-sonnet-20241022"
     assert out.prompt_version == "grounded-answer-v1"
+
+
+def test_generator_groq_path(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("GROQ_API_KEY", "groq-key")
+    gen = AnswerGenerator()
+    _inject(gen, _OpenAIFake("BM25 ranks by term frequency."), provider="groq", model="llama-3.3-70b-versatile")
+    out = gen.generate("how does bm25 rank", "BM25 scores documents ...")
+    assert out is not None
+    assert "BM25" in out.text
+    assert out.provider == "groq"
+    assert out.model == "llama-3.3-70b-versatile"
 
 
 def test_pipeline_abstains_on_out_of_corpus(retriever):
@@ -72,6 +125,7 @@ def test_pipeline_abstains_on_out_of_corpus(retriever):
 
 def test_pipeline_generator_unavailable_note(monkeypatch, retriever):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     res = answer_question(retriever, "how does bm25 score a document from term frequency", k=3)
     assert res.abstained is False
     assert res.answer is None
@@ -82,9 +136,9 @@ def test_pipeline_generator_unavailable_note(monkeypatch, retriever):
 def test_pipeline_generated_and_judged_with_fakes(monkeypatch, retriever):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
     gen = AnswerGenerator()
-    gen._client = _FakeClient("BM25 scores a document using term frequency, IDF, and length normalization.")
+    _inject(gen, _AnthropicFake("BM25 scores a document using term frequency, IDF, and length normalization."), provider="anthropic", model="claude-3-5-sonnet-20241022")
     judge = AnthropicJudge()
-    judge._client = _FakeClient('{"faithfulness": 0.9, "answer_relevance": 0.85}')
+    _inject(judge, _AnthropicFake('{"faithfulness": 0.9, "answer_relevance": 0.85}'), provider="anthropic", model="claude-3-5-sonnet-20241022")
 
     res = answer_question(
         retriever,
@@ -95,12 +149,15 @@ def test_pipeline_generated_and_judged_with_fakes(monkeypatch, retriever):
     )
     assert res.answer_source == "generated"
     assert "BM25" in res.answer
+    assert res.provider == "anthropic"
+    assert res.model == "claude-3-5-sonnet-20241022"
     assert res.faithfulness == 0.9
     assert res.answer_relevance == 0.85
 
 
 def test_generate_endpoint_without_key(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     from fastapi.testclient import TestClient
 
     from hybridrag import api

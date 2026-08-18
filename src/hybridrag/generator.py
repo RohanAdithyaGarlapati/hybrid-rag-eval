@@ -1,18 +1,18 @@
-"""Grounded answer generation via the Anthropic API.
+"""Grounded answer generation, provider agnostic.
 
-The generator turns a question plus retrieved context into an answer that is
-instructed to stay grounded in the context and to say it does not know when the
-context is insufficient. Like the judge, it uses a pinned model and a versioned
-prompt, reads ``ANTHROPIC_API_KEY`` from the environment, and skips gracefully
-(returning ``None``) when the key or SDK is absent.
+Turns a question plus retrieved context into an answer that must stay grounded in
+the context and say it does not know when the context is insufficient. It uses a
+versioned prompt and whichever backend is configured (Anthropic, or the free Groq
+tier as a fallback), reading keys from the environment and skipping gracefully
+(returning ``None``) when no backend is available.
 """
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 
-GENERATOR_MODEL = "claude-3-5-sonnet-20241022"
+from ._llm import LLMClient
+
 GENERATOR_PROMPT_VERSION = "grounded-answer-v1"
 
 _ANSWER_PROMPT = """You are a careful assistant. Prompt version: {version}.
@@ -32,61 +32,44 @@ CONTEXT:
 @dataclass
 class GeneratedAnswer:
     text: str
+    provider: str
     model: str
     prompt_version: str
 
 
 class AnswerGenerator:
-    def __init__(
-        self,
-        model: str = GENERATOR_MODEL,
-        prompt_version: str = GENERATOR_PROMPT_VERSION,
-        *,
-        max_tokens: int = 300,
-    ) -> None:
-        self.model = model
+    def __init__(self, prompt_version: str = GENERATOR_PROMPT_VERSION, *, max_tokens: int = 300) -> None:
         self.prompt_version = prompt_version
         self.max_tokens = max_tokens
-        self._client = None
-        self._reason_unavailable: str | None = None
-        self._init_client()
-
-    def _init_client(self) -> None:
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        if not api_key:
-            self._reason_unavailable = "ANTHROPIC_API_KEY is not set"
-            return
-        try:
-            import anthropic  # deferred import
-        except Exception as exc:  # noqa: BLE001
-            self._reason_unavailable = f"anthropic SDK not importable: {exc}"
-            return
-        try:
-            self._client = anthropic.Anthropic(api_key=api_key)
-        except Exception as exc:  # noqa: BLE001
-            self._reason_unavailable = f"failed to construct client: {exc}"
+        self._llm = LLMClient()
 
     @property
     def available(self) -> bool:
-        return self._client is not None
+        return self._llm.available
 
     @property
     def reason_unavailable(self) -> str | None:
-        return self._reason_unavailable
+        return self._llm.reason_unavailable
+
+    @property
+    def provider(self) -> str | None:
+        return self._llm.provider
+
+    @property
+    def model(self) -> str | None:
+        return self._llm.model
 
     def generate(self, question: str, context: str) -> GeneratedAnswer | None:
-        """Return a grounded answer, or ``None`` when the generator is unavailable."""
+        """Return a grounded answer, or ``None`` when no backend is available."""
         if not self.available:
             return None
         prompt = _ANSWER_PROMPT.format(
             version=self.prompt_version, question=question, context=context
         )
-        msg = self._client.messages.create(
-            model=self.model,
-            max_tokens=self.max_tokens,
-            messages=[{"role": "user", "content": prompt}],
+        text = self._llm.complete(prompt, max_tokens=self.max_tokens)
+        return GeneratedAnswer(
+            text=text,
+            provider=self._llm.provider,
+            model=self._llm.model,
+            prompt_version=self.prompt_version,
         )
-        text = "".join(
-            block.text for block in msg.content if getattr(block, "type", "") == "text"
-        ).strip()
-        return GeneratedAnswer(text=text, model=self.model, prompt_version=self.prompt_version)

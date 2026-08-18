@@ -54,6 +54,8 @@ class GenerateResponse(BaseModel):
     context: str
     answer: Optional[str]
     answer_source: str
+    provider: Optional[str] = None
+    model: Optional[str] = None
     faithfulness: Optional[float] = None
     answer_relevance: Optional[float] = None
     notes: list[str] = Field(default_factory=list)

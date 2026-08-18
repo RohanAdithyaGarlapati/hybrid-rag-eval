@@ -39,6 +39,7 @@ def test_experiment_runs_and_reports_all_variants():
 
 def test_judge_skips_without_api_key(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
     judge = AnthropicJudge()
     assert judge.available is False
     assert judge.score("q", "context", "answer") is None

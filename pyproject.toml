@@ -21,7 +21,7 @@ dependencies = [
 
 [project.optional-dependencies]
 semantic = ["sentence-transformers>=2.7"]
-judge = ["anthropic>=0.34"]
+judge = ["anthropic>=0.34", "openai>=1.0"]
 dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [project.scripts]

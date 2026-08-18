@@ -22,6 +22,8 @@ class PipelineResult:
     context: str
     answer: Optional[str]
     answer_source: str  # "generated", "abstained", or "generator-unavailable"
+    provider: Optional[str] = None
+    model: Optional[str] = None
     faithfulness: Optional[float] = None
     answer_relevance: Optional[float] = None
     notes: list[str] = field(default_factory=list)
@@ -94,6 +96,8 @@ def answer_question(
         context=context,
         answer=gen.text,
         answer_source="generated",
+        provider=gen.provider,
+        model=gen.model,
         faithfulness=faithfulness,
         answer_relevance=answer_relevance,
         notes=notes,

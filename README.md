@@ -1,27 +1,35 @@
 # hybrid-rag-eval
+
 [![eval](https://github.com/RohanAdithyaGarlapati/hybrid-rag-eval/actions/workflows/eval.yml/badge.svg)](https://github.com/RohanAdithyaGarlapati/hybrid-rag-eval/actions/workflows/eval.yml)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Tests](https://img.shields.io/badge/tests-75%20passing-brightgreen)
 
+A hybrid (lexical plus dense) retrieval system with a statistical evaluation harness,
+built to be read as a portfolio piece: every module is small, tested, and honest about
+what it does. It ships a hand authored 40 document handbook corpus on ML systems
+engineering, a 50 question labeled query set split into lexical and paraphrase halves,
+10 unanswerable questions for abstention calibration, and an experiment grid that reports
+recall, MRR, and nDCG with paired significance testing and multiple comparison correction.
+
 ## Results at a glance
 
 Same corpus and queries, two embedders. The semantic model earns its keep on the
-paraphrase split, where character-overlap matching cannot help:
+paraphrase split, where character overlap matching cannot help:
 
 | Embedder | overall recall@5 (hybrid-rrf) | dense recall@5, paraphrase split |
 |---|---|---|
-| HashingEmbedder (non-semantic fallback) | 0.940 | 0.760 |
-| all-MiniLM-L6-v2 (semantic) | 1.000 | <paste your semantic paraphrase number> |
+| HashingEmbedder (non semantic fallback) | 0.940 | 0.760 |
+| all-MiniLM-L6-v2 (semantic) | 1.000 | 0.960 |
 
 Every run stamps the report with commit SHA, dataset SHA256, and the embedder's
 `is_semantic` flag, so the two can never be confused. See `reports/experiment_report.md`.
 
 ## Architecture
 
-​```mermaid
+```mermaid
 flowchart LR
-    subgraph Ingest [Offline ingestion]
+    subgraph Ingest["Offline ingestion"]
         C[Corpus] --> CH[Chunking<br/>fixed / overlapping / semantic]
         CH --> II[Inverted index + BM25]
         CH --> VS[Vector store<br/>L2-normalized]
@@ -35,14 +43,17 @@ flowchart LR
     DEN --> AB[Abstention guardrail<br/>on dense cosine]
     F --> CTX[Context builder<br/>strongest-first]
     AB --> CTX
-​```
+```
 
-A hybrid (lexical plus dense) retrieval system with a statistical evaluation harness,
-built to be read as a portfolio piece: every module is small, tested, and honest about
-what it does. It ships a hand authored 40 document handbook corpus on ML systems
-engineering, a 50 question labeled query set split into lexical and paraphrase halves,
-10 unanswerable questions for abstention calibration, and an experiment grid that reports
-recall, MRR, and nDCG with paired significance testing and multiple comparison correction.
+Key design choices worth calling out:
+
+* **Abstention is thresholded on dense cosine similarity, not on the fused RRF score.** RRF scores
+  are a function of rank position only and carry no absolute confidence, so they are the wrong
+  signal for deciding whether to answer. The dense cosine of the best chunk is a real confidence.
+* **Context is built strongest first** to mitigate the lost in the middle effect.
+* **The candidate pool is wider than k** before fusion, so fusion has material to reorder.
+* **Everything reproducible is seeded and stamped**: the report carries the commit SHA, the dataset
+  SHA256, and the embedder identity.
 
 ## Honest statement on the reported numbers
 
@@ -51,29 +62,32 @@ The evaluation supports two embedders:
 * `SentenceTransformerEmbedder` wrapping `all-MiniLM-L6-v2` (semantic, `is_semantic=True`).
 * `HashingEmbedder`, a dependency free character n gram hashing fallback (`is_semantic=False`).
 
-**The numbers committed in `reports/experiment_report.md` were produced by the non semantic
-`HashingEmbedder` fallback.** The environment used to build and validate this repository had
-no access to download the `sentence-transformers` weights, so `build_embedder("auto")` warned
-loudly and fell back to hashing, exactly as designed. The harness ran fully end to end on the
-fallback: dataset build, 75 passing tests, the complete experiment grid, and the CI quality gate.
+By default the harness auto selects the semantic `all-MiniLM-L6-v2` model. When the weights
+cannot be downloaded (an offline or firewalled environment), `build_embedder("auto")` warns
+loudly, falls back to the `HashingEmbedder`, and stamps `is_semantic=False` in the report, so a
+semantic run and a fallback run can never be mistaken for one another.
 
-Because the fallback matches on character overlap rather than meaning, the **paraphrase split
-is weaker than it would be with a real dense encoder**. That is expected and is not a bug. It
-shows up clearly in the by kind table: the lexical split is essentially solved while dense
-retrieval on paraphrases lags. To reproduce with the semantic model, install the extra and run
-on a machine with network access to the model hub:
+The two embedders make a deliberate point. Lexical questions are essentially solved by BM25 alone.
+The paraphrase split, which shares little surface vocabulary with the gold document, is where a
+real dense encoder pulls ahead: the semantic model lifts dense paraphrase recall well above the
+hashing fallback, because character overlap cannot bridge a vocabulary gap that meaning can. That
+gap, visible in the by kind table, is the whole reason a hybrid system exists.
+
+To reproduce both paths:
 
 ```bash
+# semantic (needs network access to the model hub on first run)
 pip install -e ".[semantic]"
-python scripts/eval_gate.py   # build_embedder("auto") will now prefer all-MiniLM-L6-v2
+python -m hybridrag.evaluate --embedder sentence-transformers
+
+# offline fallback (no extra dependencies)
+python -m hybridrag.evaluate --embedder hashing
 ```
 
-The report is always stamped with the embedder name and its `is_semantic` flag, so no run can be
-mistaken for the other.
+### Fallback baseline numbers (HashingEmbedder, seed 0)
 
-### Headline numbers from the committed run (HashingEmbedder fallback, seed 0)
-
-Overall recall@5 / MRR / nDCG@10 for a few variants:
+These verified numbers come from the dependency free fallback and serve as the floor the semantic
+model improves on. Overall recall@5 / MRR / nDCG@10 for a few variants:
 
 | chunking | mode | recall@5 | MRR | nDCG@10 |
 |---|---|---|---|---|
@@ -88,11 +102,11 @@ similarity, catching 100 percent of unanswerable questions at a 26 percent false
 See `reports/experiment_report.md` for the full grid, the paired Wilcoxon comparisons with
 Holm-Bonferroni correction, and bootstrap confidence intervals.
 
-With BM25 as such a strong lexical baseline on this corpus, none of the fallback variants beat it
-after Holm correction. That is the honest result for a non semantic embedder and is precisely the
-gap a real dense model is expected to close on the paraphrase split.
+With BM25 as such a strong lexical baseline on this corpus, no fallback variant beats it after Holm
+correction. That is the honest result for a non semantic embedder, and is precisely the gap the
+semantic model closes on the paraphrase split.
 
-## Architecture
+## Repository layout
 
 ```
 data/build_dataset.py      Hand authored corpus + questions; validates every gold id.
@@ -114,22 +128,11 @@ scripts/eval_gate.py       CI quality gate on recall@5.
 .github/workflows/eval.yml Lint + tests + evaluation gate.
 ```
 
-Key design choices worth calling out:
-
-* **Abstention is thresholded on dense cosine similarity, not on the fused RRF score.** RRF scores
-  are a function of rank position only and carry no absolute confidence, so they are the wrong
-  signal for deciding whether to answer. The dense cosine of the best chunk is a real confidence.
-* **Context is built strongest first** to mitigate the lost in the middle effect.
-* **The candidate pool is wider than k** before fusion, so fusion has material to reorder.
-* **Everything reproducible is seeded and stamped**: the report carries the commit SHA, the dataset
-  SHA256, and the embedder identity.
-
 ## Requirements and Python version
 
-The project targets **Python 3.12** (`requires-python = ">=3.12"` in `pyproject.toml`). The sandbox
-used to author and validate it ran **CPython 3.10** because 3.12 could not be fetched there; the
-code is written to run on 3.10+ and the test suite passes on it. On 3.12 nothing changes. Tests use
-`pythonpath = ["src"]` so no install is required to run them.
+The project targets **Python 3.12** (`requires-python = ">=3.12"` in `pyproject.toml`). The code is
+written to run on 3.10+ as well, and the test suite uses `pythonpath = ["src"]` so no install is
+required just to run the tests.
 
 ## How to run
 
@@ -163,7 +166,7 @@ uvicorn hybridrag.api:app --reload    # then GET /health, POST /search, POST /an
 `judge.py` scores faithfulness and answer relevance through the Anthropic API against a pinned model
 (`claude-3-5-sonnet-20241022`) and a versioned prompt (`faithfulness-relevance-v1`). It reads
 `ANTHROPIC_API_KEY` and, when the key or SDK is absent, reports itself unavailable and skips cleanly
-rather than failing. No judge call is made in the committed evaluation run.
+rather than failing.
 
 ## License
 

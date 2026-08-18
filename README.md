@@ -1,4 +1,41 @@
 # hybrid-rag-eval
+[![eval](https://github.com/RohanAdithyaGarlapati/hybrid-rag-eval/actions/workflows/eval.yml/badge.svg)](https://github.com/RohanAdithyaGarlapati/hybrid-rag-eval/actions/workflows/eval.yml)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Tests](https://img.shields.io/badge/tests-75%20passing-brightgreen)
+
+## Results at a glance
+
+Same corpus and queries, two embedders. The semantic model earns its keep on the
+paraphrase split, where character-overlap matching cannot help:
+
+| Embedder | overall recall@5 (hybrid-rrf) | dense recall@5, paraphrase split |
+|---|---|---|
+| HashingEmbedder (non-semantic fallback) | 0.940 | 0.760 |
+| all-MiniLM-L6-v2 (semantic) | 1.000 | <paste your semantic paraphrase number> |
+
+Every run stamps the report with commit SHA, dataset SHA256, and the embedder's
+`is_semantic` flag, so the two can never be confused. See `reports/experiment_report.md`.
+
+## Architecture
+
+​```mermaid
+flowchart LR
+    subgraph Ingest [Offline ingestion]
+        C[Corpus] --> CH[Chunking<br/>fixed / overlapping / semantic]
+        CH --> II[Inverted index + BM25]
+        CH --> VS[Vector store<br/>L2-normalized]
+    end
+    Q[Query] --> LEX[Lexical arm<br/>BM25]
+    Q --> DEN[Dense arm<br/>cosine]
+    II --> LEX
+    VS --> DEN
+    LEX --> F[Fusion<br/>RRF / normalized]
+    DEN --> F
+    DEN --> AB[Abstention guardrail<br/>on dense cosine]
+    F --> CTX[Context builder<br/>strongest-first]
+    AB --> CTX
+​```
 
 A hybrid (lexical plus dense) retrieval system with a statistical evaluation harness,
 built to be read as a portfolio piece: every module is small, tested, and honest about

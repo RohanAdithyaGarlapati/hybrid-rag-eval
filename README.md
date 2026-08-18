@@ -120,11 +120,14 @@ src/hybridrag/
   retriever.py             HybridRetriever (lexical/dense/hybrid), abstention, context builder.
   metrics.py               recall@k, hit@k, precision@k, MRR, nDCG, per query + aggregate.
   stats.py                 Wilcoxon (MWU fallback), rank biserial, bootstrap CI, Holm-Bonferroni.
-  judge.py                 Anthropic LLM as judge (pinned model + versioned prompt), skips w/o key.
+  _llm.py                  Provider agnostic LLM client (Anthropic + free Groq fallback).
+  generator.py             Grounded answer generation with a versioned prompt.
+  judge.py                 LLM as judge: faithfulness + answer relevance, key optional.
+  pipeline.py              End to end RAG: retrieve -> abstain/generate -> judge.
   evaluate.py              Experiment grid, stats, abstention sweep, Markdown report.
-  api.py                   FastAPI /health /search /answer with Pydantic validation.
-  cli.py                   index / query / evaluate subcommands.
-tests/                     75 tests (chunking, bm25, embeddings, fusion, metrics, stats, retriever, api).
+  api.py                   FastAPI /health /search /answer /generate with Pydantic validation.
+  cli.py                   index / query / ask / evaluate subcommands.
+tests/                     82 tests (chunking, bm25, embeddings, fusion, metrics, stats, retriever, api, generation).
 scripts/eval_gate.py       CI quality gate on recall@5.
 .github/workflows/eval.yml Lint + tests + evaluation gate.
 ```
